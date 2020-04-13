@@ -1,14 +1,10 @@
-function [expConfig,csiMatrix] = readDatFile(filename)
+function [expConfig,csiMatrix,csiMatrixInfo] = readDatFile(filepath)
 %% Filename parsing
 %   - Only considering the raw ".dat" file
-filename = split(filename,".");
-
 %   Input checking
-assert( ...
-    length(filename) == 1 || (length(filename) == 2 && contains(filename(2),'dat')), ...
-    'Wrong input format of Read_File(filename)');
-
-filename = filename(1);
+filename = split(filepath,"/");
+filename = filename(end);
+assert(contains(filename,'.dat'), 'File path needs complete extension name <file.dat>');
 
 %% Analysis the File Name
 [ ...
@@ -22,5 +18,8 @@ filename = filename(1);
 ] = getExpConfigFromFileName(filename);
 
 %% Read the data of .DAT file
-csiMatrix = getReadingFromDatFile(filename+".dat");
+csiMatrix = getReadingFromDatFile(filepath);
+
+%% Statistic the information of csiMatrix
+csiMatrixInfo = getCsiMatrixInfo(csiMatrix);
 end

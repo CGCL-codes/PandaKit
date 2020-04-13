@@ -12,8 +12,7 @@ assert(contains(s.suite,'InFit','IgnoreCase',true),'The suite of preprocessSuitI
 if contains(s.device,'iwl5300','IgnoreCase',true)
     subCarrierNum = 30;
 end
-outPhase = Phase_Calibration_ConjuMulti(inCSI)
-cm_csi = max_var_link .* conj(max_mean_link);
+csiCM = Phase_Calibration_ConjuMulti(csi);
 
 %% Noise Filtering using Butterworth Filter
 if strcmp(s.FILTER,'BPF')

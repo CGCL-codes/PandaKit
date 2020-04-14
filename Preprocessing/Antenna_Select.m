@@ -1,27 +1,29 @@
-function outCSI = Antenna_Select(inCSI)
-%Pair of Antennas selection
-%Input: CSI Amplitude Seq from different antenna pairs
-%Output: Ordered CSI of subchannels: from CSI of Small Amplitude Large Variance subchannel
-%                    to CSI of Large Amplitude Small Variance subchannel
-    CSIAmp = abs(inCSI);
-    rowNum = length(CSIAmp(:,1));
-    outCSI = inCSI;
-    
-    if rowNum >= 60
-        stdRes = mapminmax(std(CSIAmp, 0, 2), 0, 1);
-        sumRes = mapminmax(sum(CSIAmp, 2), 0, 1);
-        Res = sumRes - stdRes;
-    else
-        disp("Number of subchannel <= 1 without the need of antenna selection.");
-    end
-    
-    subChannelNum = floor(rowNum/30);
-    stdResSum=zeros(1,subChannelNum);
-    for i = 1:subChannelNum
-        stdResNum(1,i) = sum(Res((i-1)*30+1 : i*30, 1));
-    end
-    [B, index] = sort(stdResNum);
-    for i = 1:subChannelNum
-        outCSI((i-1)*30+1 : i*30, :) = inCSI((index(i)-1)*30+1 : index(i)*30, :);
-    end
+function [csiMaxVar,csiMaxMean] = Antenna_Select(inCSI,subCarrierNum)
+%% Determine the links with max average amplitude and max amplitude variance
+%   Input:
+%       inCSI - Complex 2-d matrix with size of [packetNum, subcarrierNum*links]
+%       subcarrierNum - The number of subcarriers between a certain T-R pair
+%   Output: two sub-matrix
+%       csiMaxMean - sub-matrix of the links with the max average amplitude
+%       csiMaxVar - sub-matrix of the links with the max variance
+[csiMaxVar,csiMaxMean] = deal({});
+
+%% Input check
+linkNum = floor(size(inCSI,2)/subCarrierNum);
+if linkNum < 2 % Antenna selection needs at least two links
+    return;
+end
+
+csiAmp = abs(inCSI);
+
+% Compute the ratio refering to WiDance
+ratioAmpToStd = mean(csiAmp) ./ std(csiAmp); 
+
+% Reshape the ratio list to a matrix with size of [subCarrierNum,links]
+ratioReshape = sum(reshape(ratioAmpToStd,subCarrierNum,[]));
+minRatioIdx = find(ratioReshape==min(ratioReshape));
+maxRatioIdx = find(ratioReshape==max(ratioReshape));
+
+csiMaxVar = inCSI(:,(minRatioIdx-1)*subCarrierNum+1:minRatioIdx*subCarrierNum);
+csiMaxMean = inCSI(:,(maxRatioIdx-1)*subCarrierNum+1:maxRatioIdx*subCarrierNum);
 end

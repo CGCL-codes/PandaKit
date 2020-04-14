@@ -1,10 +1,16 @@
-function outPhase = Phase_Calibration_ConjuMulti(inCSI)
+function csiCM = Phase_Calibration_ConjuMulti(csi,subcarrierNum)
 %% Using conjugate multiplication to realize phase calibration
-%   inCSI - Complex 2-d matrix with size of [packetNum, subcarrierNum*links]
-%   outCSI - the conjugation multiple result of the CSI sequences of two links
-%               with size of [packetNum, subcarrierNum]
+%   Input:
+%       inCSI - Complex 2-d matrix with size of [packetNum, subcarrierNum*links]
+%       subcarrierNum - The number of subcarriers between a certain T-R pair
+%   Output: two sub-matrix
+%       csiMaxMean - sub-matrix of the links with the max average amplitude
+%       csiMaxVar - sub-matrix of the links with the max variance
 
-selectedCSI = Antenna_Select(inCSI);
-outPhase = selectedCSI(1:30,:) .* conj(selectedCSI(end-29:end,:));
-
+[csiMaxVar,csiMaxMean] = Antenna_Select(csi,subcarrierNum);
+if ~isempty(csiMaxVar) && ~isempty(csiMaxMean)
+    % The order of csiMaxVar and csiMaxMean is very important
+    csiCM = csiMaxVar .* conj(csiMaxMean);
+else
+    csiCM = {};
 end

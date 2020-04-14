@@ -8,29 +8,34 @@ function output = preprocessSuitInFit(csi,s)
 %   s - a struct of processing suite
 assert(contains(s.suite,'InFit','IgnoreCase',true),'The suite of preprocessSuitInFit() should be InFit');
 
-%% Conjugate Multiplication
+%% Conjugate multiplication for phase calibration
 if contains(s.device,'iwl5300','IgnoreCase',true)
     subCarrierNum = 30;
 end
-csiCM = Phase_Calibration_ConjuMulti(csi);
+csiCM = Phase_Calibration_ConjuMulti(csi,subCarrierNum);
+if isempty(csiCM)
+    csiCM = csi;
+end
 
 %% Noise Filtering using Butterworth Filter
-if strcmp(s.FILTER,'BPF')
-    csi_bandpass = bandpass(cm_csi',s.PERMITBAND,s.FS); % Band-pass filter, we select the speed between 0.15m/s and 2.8m/s
-elseif strcmp(s.FILTER,'LPF')
-    csi_bandpass = lowpass(cm_csi',s.PERMITBAND,s.FS); % Low-pass filter, we select the speed under 2.8m/s
+if contains(s.filter,'bpf')
+    csiFilter = BPF(csiCM,s.fc,s.fs); % Band-pass filter
+elseif contains(s.filter,'lpf')
+    csiFilter = LPF(csiCM,s.fc,s.fs); % Low-pass filter
+elseif contains(s.filter,'hpf')
+    csiFilter = HPF(csiCM,s.fc,s.fs); % High-pass filter
 end
 
 %% PCA-based denoising
 lenChunk = floor(s.FS*s.WINPCA);
-totalLength = length(csi_bandpass); % Total length of received signal
+totalLength = length(csiFilter); % Total length of received signal
 numChunk = floor( totalLength / lenChunk); % The number of chunks, the last one won't be considered
 
-csi_pca = zeros(numChunk*lenChunk,size(csi_bandpass,2));
+csi_pca = zeros(numChunk*lenChunk,size(csiFilter,2));
 
 for i = 1:numChunk
     % Create total score sequences
-    chunk = csi_bandpass(i*lenChunk-lenChunk+1:i*lenChunk,:);       
+    chunk = csiFilter(i*lenChunk-lenChunk+1:i*lenChunk,:);       
     [~,score,~,~,~] = pca(chunk); % PCA
     csi_pca(i*lenChunk-lenChunk+1:i*lenChunk,:) = score;
 end
@@ -39,7 +44,7 @@ end
 % dc_approx has no need to update
 % Only ensure that numChunk*lenChunk+1 is smaller than totalLength
 if numChunk*lenChunk+1 < totalLength
-    chunk = csi_bandpass(numChunk*lenChunk+1:totalLength,:);
+    chunk = csiFilter(numChunk*lenChunk+1:totalLength,:);
     if size(chunk,1) < size(chunk,2)
         % When records is shorter than feature's number
         chunk_size = size(chunk,1);

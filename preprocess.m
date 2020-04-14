@@ -30,7 +30,7 @@ function varargout = preprocess(csiMat,varargin)
 %   - 'bpf': band-pass filter
 %   - 'hpf': high-pass filter
 %
-% 'passband': set the parameter of denoise methods
+% 'fc': set the parameter of cutoff frequency
 %   - scalar numeric, e.g., 200
 %   - 2-D numeric array, e.g., [2 200]
 %
@@ -57,7 +57,7 @@ expectedSuite = {'infit','widance','carm'};
 defaultFs = 1000; % Samping rate
 defaultFilter = 'bpf'; % Filter
 expectedFilter = {'lpf','bpf','hpf'};
-defaultPassband = [2,200]; % passband for lpf/bpf/hpf filter
+defaultFc = [2,200]; % fc for lpf/bpf/hpf filter
 defaultDcRemove = [4000,1000]; % DC removal
 defaultPca = [1000,1000,2:15]; % PCA
 defaultStft = [512,32,5]; % stft
@@ -83,9 +83,9 @@ addParameter(p,'fs',defaultFs,validFunFs);
 % filter: 'lpf', 'bpf', 'hpf'
 addParameter(p,'filter',defaultFilter, @(x) any(validatestring(x,expectedFilter)));
 
-% Passband validation
-validFunPassband = @(x) validateattributes(x, {'numeric'}, {'positive','increasing'});
-addParameter(p,'passband',defaultPassband,validFunPassband);
+% fc validation
+validFunFc = @(x) validateattributes(x, {'numeric'}, {'positive','increasing'});
+addParameter(p,'fc',defaultFc,validFunFc);
 
 % stft/dcRemove should be a numeric array with 2 components
 % - [Window Size], [Stride Length]
@@ -135,7 +135,7 @@ switch upper(customSuite.suite)
     case 'INFIT'
         customSuite.fs = p.Results.fs;
         customSuite.filter = p.Results.filter;
-        customSuite.passband = p.Results.passband;
+        customSuite.fc = p.Results.fc;
         customSuite.pca = p.Results.pca;
         customSuite.stft = p.Results.stft;
         customSuite.phaseCalibration = p.Results.phaseCalibration;

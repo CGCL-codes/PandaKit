@@ -10,7 +10,8 @@ function csiCM = Phase_Calibration_ConjuMulti(csi,subcarrierNum)
 [csiMaxVar,csiMaxMean] = Antenna_Select(csi,subcarrierNum);
 if ~isempty(csiMaxVar) && ~isempty(csiMaxMean)
     % The order of csiMaxVar and csiMaxMean is very important
-    csiCM = csiMaxVar .* conj(csiMaxMean);
+    %csiCM = csiMaxVar .* conj(csiMaxMean);
+    csiCM = csiMaxMean .* conj(csiMaxVar);
 else
     csiCM = {};
 end

@@ -20,7 +20,7 @@ csiAmp = abs(inCSI);
 ratioAmpToStd = mean(csiAmp) ./ std(csiAmp); 
 
 % Reshape the ratio list to a matrix with size of [subCarrierNum,links]
-ratioReshape = sum(reshape(ratioAmpToStd,subCarrierNum,[]));
+ratioReshape = mean(reshape(ratioAmpToStd,subCarrierNum,[]));
 minRatioIdx = find(ratioReshape==min(ratioReshape));
 maxRatioIdx = find(ratioReshape==max(ratioReshape));
 

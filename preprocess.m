@@ -1,11 +1,11 @@
-function varargout = preprocess(csiMat,varargin)
+function y = preprocess(csiMat,varargin)
 %% De-noise, calibration and interpolation
 % ==============================================================
 % Preprocessing the wireless signals for sensing problem
 % ===========================================================================
 %% Syntax:
-%  varargout = Preprocessing(csiMat)
-%  varargout = Preprocessing(csiMat,varargin)
+%  y = Preprocessing(csiMat)
+%  y = Preprocessing(csiMat,varargin)
 %   - e.g., [psd,frequency,~] = Preprocessing(x,'suite','infit')
 %
 % 'csiMat': a numeric 2-D matrix contains timestamp_low/bfee_count/csi/rssi
@@ -34,15 +34,11 @@ function varargout = preprocess(csiMat,varargin)
 %   - scalar numeric, e.g., 200
 %   - 2-D numeric array, e.g., [2 200]
 %
-% 'dcRemove': Window for removing the DC component.
-%   - 2-D numeric array: [Window Size, Stride Length]
-%   - window of dcRemove should be larger than aht of pca
-%
 % 'pca': pca-based de-noise
-%   - 2-D numeric array: [Window Size, Stride Length, Candidate Components]
+%   - 2-D numeric array: [PCA window, Candidate components]
 %
 % 'stft': The size of STFT window.
-%   - 2-D numeric array: [Window Size, Stride Length]
+%   - numeric array: [Window Size, Stride Length, Spectrogram Clean Window Size]
 %
 % 'phaseCalibration': Setting phase calibration methods
 %   - 'conjMul': using conjugate multiplication to realize phase
@@ -58,9 +54,8 @@ defaultFs = 1000; % Samping rate
 defaultFilter = 'bpf'; % Filter
 expectedFilter = {'lpf','bpf','hpf'};
 defaultFc = [2,200]; % fc for lpf/bpf/hpf filter
-defaultDcRemove = [4000,1000]; % DC removal
-defaultPca = [1000,1000,2:15]; % PCA
-defaultStft = [512,32,5]; % stft
+defaultPca = [4000,1000,2:15]; % PCA
+defaultStft = [512,16,5]; % stft
 defaultPhaseCallibration = 'conjuMulti'; % phaseCalibration
 expectedPhaseCallibration = {'conjuMulti'};
 defaultDevice = 'iwl5300'; % device
@@ -86,11 +81,6 @@ addParameter(p,'filter',defaultFilter, @(x) any(validatestring(x,expectedFilter)
 % fc validation
 validFunFc = @(x) validateattributes(x, {'numeric'}, {'positive','increasing'});
 addParameter(p,'fc',defaultFc,validFunFc);
-
-% stft/dcRemove should be a numeric array with 2 components
-% - [Window Size], [Stride Length]
-validFunDC = @(x) validateattributes(x, {'numeric'}, {'positive','numel',2});
-addParameter(p,'dcRemove',defaultDcRemove,validFunDC);
 
 % pca should be a numeric array with more than 2 components
 % - [Window Size], [Stride Length], [Candidate Components]
@@ -144,40 +134,26 @@ switch upper(customSuite.suite)
         
     case 'WIDANCE'
         % Change the parameter of default WiDance suite
-        customSuite.FILTER = 'BPF';
-        customSuite.PERMITBAND = [2 200];
-        customSuite.WINSTFT = 1024;
-        customSuite.OVERLAP = 992;
-        customSuite.PCC = 2;
-        customSuite.ANTSEL = true;
+        customSuite.fs = p.Results.fs;
+        customSuite.filter = p.Results.filter;
+        customSuite.fc = p.Results.fc;
+        customSuite.pca = p.Results.pca;
+        customSuite.stft = p.Results.stft;
+        customSuite.phaseCalibration = p.Results.phaseCalibration;
 
-        idx = ~cellfun(@(f)any(strcmp(f,fieldnames(customSuite))),cFld);
-        if any(idx)
-            error('Unsupported field name/s:%s\b',sprintf(' <%s>,',cFld{idx}))
-        end
-        suite = configComplete(customSuite,customSuite);
-        output = Preprocessing_Suit_Widance(x,suite);
+        output = preprocessSuitWidance(csi,customSuite);
         
     case 'CARM'
-        % Change the parameter of default CARM suite
-        customSuite.CLEANSPEC = true;
-        customSuite.WINSPECLPF = 5;
-        customSuite.FILTER = 'LPF';
-        customSuite.PERMITBAND = 200;
-        customSuite.WINSTFT = 1024;
-        customSuite.OVERLAP = 992;
+        customSuite.fs = p.Results.fs;
+        customSuite.filter = 'lpf'; % The default filter of CARM
+        customSuite.fc = 200; % The default cutoff frequency of lpf
+        customSuite.pca = p.Results.pca;
+        customSuite.stft = p.Results.stft;
         
-        idx = ~cellfun(@(f)any(strcmp(f,fieldnames(customSuite))),cFld);
-        if any(idx)
-            error('Unsupported field name/s:%s\b',sprintf(' <%s>,',cFld{idx}))
-        end
-        suite = configComplete(customSuite,customSuite);
-        output = Preprocessing_Suit_CARM(x,suite);
+        output = preprocessSuitCarm(csi,customSuite);
 end
 
-for i = 1:nargout
-    varargout{i} = output{i};
-end
+y = output;
 
 end
 

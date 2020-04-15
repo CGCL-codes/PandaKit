@@ -2,8 +2,8 @@ function csiMatrixExtract = getElemFromCsiMatrix(csiMatrix,csiMatrixInfo,varargi
 %% Get the elements of the csiMatrix
 % ===========================================================================
 %% Syntax:
-%  elem = elemExtract(csiMatrix) - Default case extracts all csi value
-%  elem = elemExtract(csiMatrix,csiMatrixInfo,'Ntx',[1 3],'Nrx',[2 3]) - Link selection
+%  elem = getElemFromCsiMatrix(csiMatrix) - Default case extracts all csi value
+%  elem = getElemFromCsiMatrix(csiMatrix,csiMatrixInfo,'Ntx',[1 3],'Nrx',[2 3]) - Link selection
 %
 %  Tips:
 %  csiMatrixInfo - a necessary argument providing the broundaries to check
@@ -29,7 +29,7 @@ addRequired(p,'csiMatrixInfo',validFunCsiMatrixInfo);
 validFunTimestampLow = @(x) validateattributes(x, ...
     'numeric', {'size', [1,2], 'increasing', ...
     '>=',csiMatrixInfo.timestamp_low(1),'<=',csiMatrixInfo.timestamp_low(2)}, 'Rankings');
-defaultTimestampLow = [0 0];    % Default value of optional arg 'timestamp_low'
+defaultTimestampLow = [0 0];    % Default value of 'timestamp_low'
 addParameter(p,'timestamp_low',defaultTimestampLow,validFunTimestampLow); % timestamp_low
 
 % Adding bfee_count validation rules
@@ -136,11 +136,14 @@ function csiMatrixExtract = extractRssi(csiMatrixCutoff,nrx)
 end
 
 function csiMatrixCut = cutoffCsiMatrixBasedOnParser(csiMatrix,p)
+    idxCsiMatrixCut = ones(1,length(csiMatrix));
+    
     % timestamp_low
     if ~ismember('timestamp_low',p.UsingDefaults)
         idxTsl = arrayfun( ...
             @(x) (x>=p.Results.timestamp_low(1) && x<=p.Results.timestamp_low(2)), ...
             [csiMatrix(:).timestamp_low]);
+        idxCsiMatrixCut = idxCsiMatrixCut & idxTsl;
     end
 
     % bfee_count
@@ -148,25 +151,29 @@ function csiMatrixCut = cutoffCsiMatrixBasedOnParser(csiMatrix,p)
         idxBfee = arrayfun( ...
             @(x) (x>=p.Results.bfee_count(1) && x<=p.Results.bfee_count(2)), ...
             [csiMatrix(:).bfee_count]);
+        idxCsiMatrixCut = idxCsiMatrixCut & idxBfee;
     end
 
     % MAC_Des
     if ~ismember('MAC_Des',p.UsingDefaults)
         idxMacDes = arrayfun( ...
             @(x) (contains(x,p.Results.MAC_Des)), {csiMatrix(:).MAC_Des});
+        idxCsiMatrixCut = idxCsiMatrixCut & idxMacDes;
     end
 
     % MAC_Src
     if ~ismember('MAC_Src',p.UsingDefaults)
         idxMacSrc = arrayfun( ...
             @(x) (contains(x,p.Results.MAC_Src)), {csiMatrix(:).MAC_Src});
+        idxCsiMatrixCut = idxCsiMatrixCut & idxMacSrc;
     end
 
     % Payloads
     if ~ismember('Payloads',p.UsingDefaults)
         idxPayloads = arrayfun( ...
             @(x) (contains(x,p.Results.Payloads)), {csiMatrix(:).Payloads});
+        idxCsiMatrixCut = idxCsiMatrixCut & idxPayloads;
     end
-
-    csiMatrixCut = csiMatrix(idxTsl&idxBfee&idxMacDes&idxMacSrc&idxPayloads);
+    
+    csiMatrixCut = csiMatrix(idxCsiMatrixCut==1);
 end

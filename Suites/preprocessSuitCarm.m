@@ -9,13 +9,13 @@ function output = preprocessSuitCarm(csi,s)
 assert(contains(s.suite,'CARM','IgnoreCase',true),'The suite of preprocessingSuitCarm() should be CARM');
 
 %% CARM only deals with the amplitude of csi
-csiAmp = abs(csi).^2;
+csiAmp2 = abs(csi).^2;
 
 %% Static noise removing
-csiDcRemove = DC_Remove(csiAmp,s.pca(1)*4,s.pca(1));
+csiAmp2DcRemove = DC_Remove(csiAmp2,s.pca(1)*4,s.pca(1));
 
 %% PCA-based denoising
-csiPCA = PCA(csiDcRemove,s.pca);
+csiPCA = PCA(abs(sqrt(csiAmp2DcRemove)),s.pca);
 
 %% Spectrogram Generation
 [output.psd,output.frequency,output.time] = Spectrogram_Generation( ...

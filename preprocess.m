@@ -145,8 +145,6 @@ switch upper(customSuite.suite)
         
     case 'CARM'
         customSuite.fs = p.Results.fs;
-        customSuite.filter = 'lpf'; % The default filter of CARM
-        customSuite.fc = 200; % The default cutoff frequency of lpf
         customSuite.pca = p.Results.pca;
         customSuite.stft = p.Results.stft;
         

@@ -1,0 +1,48 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+        <PreferenceCategory
+            app:key="context_settings"
+            app:title="context settings"
+            app:iconSpaceReserved="false">
+                <ListPreference
+                    app:defaultValue="hand"
+                    app:entries="@array/carry_type_entries"
+                    app:entryValues="@array/carry_type_values"
+                    app:key="carry_type"
+                    app:title="Carry Type"
+                    app:useSimpleSummaryProvider="true"
+                    app:iconSpaceReserved="false"/>
+
+                <ListPreference
+                    app:defaultValue="lab"
+                    app:entries="@array/environment_entries"
+                    app:entryValues="@array/environment_values"
+                    app:key="environment"
+                    app:title="Environment"
+                    app:useSimpleSummaryProvider="true"
+                    app:iconSpaceReserved="false"/>
+
+                <ListPreference
+                    app:defaultValue="fast"
+                    app:entries="@array/speed_level_entries"
+                    app:entryValues="@array/speed_level_values"
+                    app:key="speed_level"
+                    app:title="Speed Level"
+                    app:useSimpleSummaryProvider="true"
+                    app:iconSpaceReserved="false"/>
+        </PreferenceCategory>
+
+        <PreferenceCategory
+            app:key="sensor_settings"
+            app:title="sensor settings"
+            app:iconSpaceReserved="false">
+                <ListPreference
+                    app:defaultValue="0"
+                    app:entries="@array/sensor_delay_entries"
+                    app:entryValues="@array/sensor_delay_values"
+                    app:key="sensor_delay"
+                    app:title="Sensor Delay"
+                    app:useSimpleSummaryProvider="true"
+                    app:iconSpaceReserved="false"/>
+        </PreferenceCategory>
+
+</PreferenceScreen>
